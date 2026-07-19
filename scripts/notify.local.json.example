@@ -1,0 +1,10 @@
+{
+  "_comment": "Copia este archivo a notify.local.json (SIN .example) y rellena tus datos. notify.local.json esta gitignored: tus secretos NO se suben.",
+  "_como_conseguirlos": [
+    "1. Habla con @BotFather en Telegram, crea un bot con /newbot y copia el token.",
+    "2. Escribe un mensaje a tu bot; luego abre https://api.telegram.org/bot<TOKEN>/getUpdates y copia el chat.id.",
+    "3. Rellena los dos valores de abajo y ejecuta: python notificaciones.py"
+  ],
+  "telegram_bot_token": "123456789:AA...tu-token...",
+  "telegram_chat_id": "123456789"
+}

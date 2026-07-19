@@ -1,0 +1,20 @@
+# Vagrant / VirtualBox
+.vagrant/
+*.box
+ubuntu-*.log
+*.log
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.env
+
+# Secretos locales (Telegram, etc.) - se usa notify.local.json.example como plantilla
+notify.local.json
+*.local.json
+
+# SO
+.DS_Store
+Thumbs.db

@@ -1,0 +1,26 @@
+[
+  {
+    "name": "zbx-agent01",
+    "ip": "192.168.56.11",
+    "group": "Lab/Linux",
+    "os": "linux",
+    "templates": ["Linux by Zabbix agent"],
+    "port": 10050
+  },
+  {
+    "name": "zbx-winserver",
+    "ip": "192.168.56.12",
+    "group": "Lab/Windows",
+    "os": "windows",
+    "templates": ["Windows by Zabbix agent"],
+    "port": 10050
+  },
+  {
+    "name": "dc01",
+    "ip": "192.168.56.10",
+    "group": "Lab/Windows",
+    "os": "windows",
+    "templates": ["Windows by Zabbix agent"],
+    "port": 10050
+  }
+]

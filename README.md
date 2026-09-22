@@ -2,7 +2,7 @@
 
 Laboratorio de monitorización con Zabbix 6.0 LTS sobre Debian 12, montado por código. Un `vagrant up` levanta el servidor (Zabbix, PostgreSQL y nginx) y un agente Linux, con el frontend ya configurado sin pasar por el asistente web. Los hosts, los triggers y las notificaciones se dan de alta por API desde archivos declarativos.
 
-Lo monté para no depender de la memoria de nadie al reproducir una monitorización: la infra en texto versionado, la configuración por script y las altas por API. El mismo patrón que se usa en real.
+Lo monté para no depender de la memoria de nadie al reproducir una monitorización: la infra en texto versionado, la configuración por script y las altas por API.
 
 `Vagrant` · `Debian 12` · `Zabbix 6.0 LTS` · `PostgreSQL` · `Python`
 
@@ -100,7 +100,7 @@ zabbix-lab/
 
 ## Qué se monitoriza
 
-`monitorizacion.py` crea por API los items y los triggers: agente caído, disco por encima del 85%, carga de CPU sostenida, memoria baja y el PostgreSQL del servidor si deja de escuchar. Aquí es donde se decide qué se vigila, que es la parte que instalar Zabbix no te da hecha.
+`monitorizacion.py` crea por API los items y los triggers: agente caído, disco por encima del 85%, carga de CPU sostenida, memoria baja y el PostgreSQL del servidor si deja de escuchar. Qué se vigila lo decide este script; instalar Zabbix no te lo da hecho.
 
 Los hosts salen de `hosts.json`, una entrada por equipo:
 
@@ -113,7 +113,7 @@ Añades la entrada y `alta_hosts.py` crea el host; `monitorizacion.py` mira el c
 
 ![Equipos monitorizados en Zabbix](docs/zbx-hosts.png)
 
-Para ver saltar una alerta, paro un agente a propósito:
+Para ver saltar una alerta, paro un agente:
 
 ```bash
 vagrant ssh zbx-agent01 -c 'sudo systemctl stop zabbix-agent2'
@@ -124,7 +124,7 @@ vagrant ssh zbx-agent01 -c 'sudo systemctl stop zabbix-agent2'
 
 ## Notificaciones
 
-Un trigger que solo se pinta en el panel no avisa a nadie si nadie lo está mirando. `notificaciones.py` configura por API el media type, el medio del usuario y la acción, para que la alerta salga de Zabbix.
+`notificaciones.py` configura por API el media type, el medio del usuario y la acción, para que la alerta salga de Zabbix y avise aunque nadie esté mirando el panel.
 
 El servidor levanta Mailpit, un buzón de pruebas que captura los correos y los muestra en `http://localhost:8025`. Zabbix entrega en `127.0.0.1:1025` y el aviso aparece ahí al momento, sin cuentas SMTP reales y sin mandar correo de verdad. Al parar y arrancar el agente llegan el aviso y su resuelto.
 
@@ -141,7 +141,7 @@ vagrant up zbx-winserver
 cd scripts && python alta_hosts.py && python monitorizacion.py
 ```
 
-El puente con el otro proyecto: el controlador de dominio `dc01` del [lab de Active Directory](https://github.com/yosefnaabid/activedirectory-lab) también entra en la monitorización. Comparten la red privada (`.30` este servidor, `.10` el DC). El agente de Windows se instala pasándole el nombre con el que el DC figura en `hosts.json`:
+El controlador de dominio `dc01` del [lab de Active Directory](https://github.com/yosefnaabid/activedirectory-lab) también entra en la monitorización. Comparten la red privada (`.30` este servidor, `.10` el DC). El agente de Windows se instala pasándole el nombre con el que el DC figura en `hosts.json`:
 
 ```powershell
 $env:ADLAB_WINRM_USER = 'LAB\vagrant'
@@ -149,14 +149,14 @@ vagrant winrm-upload ..\zabbix-lab\provision\agente-windows.ps1 C:\Windows\Temp\
 vagrant winrm dc01 -c "& C:\Windows\Temp\zbx-agente.ps1 192.168.56.30 dc01"
 ```
 
-Después, `alta_hosts.py` da de alta `dc01` (ya está en `hosts.json`) y `monitorizacion.py` le pone su trigger. Parar el servicio del agente en el DC dispara la alerta como en cualquier host. Si además tienes montada la integración de [glpi-lab](https://github.com/yosefnaabid/glpi-lab), esa alerta abre un ticket.
+Después, `alta_hosts.py` da de alta `dc01` (ya está en `hosts.json`) y `monitorizacion.py` le pone su trigger. Parar el servicio del agente en el DC dispara la alerta como en cualquier host.
 
 ## Problemas conocidos
 
-- **El paquete `zabbix-release` caduca por versión.** Si el provisioning se detiene al descargarlo, el propio script te dice qué línea cambiar (una sola, en `provision/servidor.sh`).
-- **El agente de Windows se baja por versión fija del CDN de Zabbix.** Si esa release deja de estar disponible y da 404, sube `$AgentVersion` en `provision/agente-windows.ps1` a una 6.0.x vigente.
-- **El servidor cambió de `.10` a `.30`.** La `.10` la ocupa el DC del lab de AD. Si tenías el lab levantado de antes: `vagrant reload zbx-server` para la IP nueva y `vagrant provision zbx-agent01` para re-apuntar el agente.
-- **Telegram no se versiona.** Sus credenciales van en `scripts/notify.local.json`, que está gitignored.
+- El paquete `zabbix-release` caduca por versión. Si el provisioning se detiene al descargarlo, el propio script te dice qué línea cambiar (una sola, en `provision/servidor.sh`).
+- El agente de Windows se baja por versión fija del CDN de Zabbix. Si esa release deja de estar disponible y da 404, sube `$AgentVersion` en `provision/agente-windows.ps1` a una 6.0.x vigente.
+- El servidor cambió de `.10` a `.30` porque la `.10` la ocupa el DC del lab de AD. Si tenías el lab levantado de antes: `vagrant reload zbx-server` para la IP nueva y `vagrant provision zbx-agent01` para re-apuntar el agente.
+- Las credenciales de Telegram no se versionan: van en `scripts/notify.local.json`, que está gitignored.
 
 ## Notas
 
@@ -166,11 +166,10 @@ Después, `alta_hosts.py` da de alta `dc01` (ya está en `hosts.json`) y `monito
 
 ## Roadmap
 
-Ideas para las siguientes iteraciones, y para enseñar evolución:
+Ideas para las siguientes iteraciones:
 
 - [x] Triggers propios definidos como código (`monitorizacion.py`: alerta de agente caído).
 - [x] Notificar las alertas por correo y Telegram (`notificaciones.py` + Mailpit; Telegram opt-in).
 - [x] Un segundo agente para monitorizar varias máquinas (host Windows Server).
 - [x] Monitorizar el DC real del lab de AD (`dc01` en `hosts.json`, agente por WinRM).
-- [x] Una alerta abre ticket en el ITSM: integración con [glpi-lab](https://github.com/yosefnaabid/glpi-lab).
 - [ ] Migrar el provisioning de shell a Ansible (`ansible_local`). Es lo siguiente que quiero probar.
